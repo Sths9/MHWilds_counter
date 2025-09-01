@@ -68,16 +68,18 @@
       padding: 2px;
     }
     .control-bar {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: #333;
-      padding: 10px;
-      display: flex;
-      justify-content: center;
-      gap: 20px;
-    }
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #333;
+  padding: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+}
+
     .control-bar button {
       background: #555;
       color: #fff;
@@ -92,18 +94,48 @@
       background: #ff9800;
     }
     .control-bar button:hover {
-      background: #777;
+      background: #636363;
     }
+
+    .over100 {
+        background-color: #d2d2d2;
+    }
+
+    .separator {
+  width: 2px;
+  background-color: #888;
+  height: 40px;
+  align-self: center;
+}
+
+
+#doneBtn {
+  background-color: #4CAF50;
+  display: none;
+}
+
   </style>
 </head>
 <body>
   <h1>モンスター狩猟数カウンター</h1>
   <div class="grid" id="monsterGrid"></div>
 
+  <div style="margin-top: 20px;">
+    <label>
+      <input type="checkbox" id="highlightCheckbox" checked>
+      100頭以上のモンスターは色付きで表示
+    </label>
+  </div>
+  <br><br><br><br>
+
   <div class="control-bar">
     <button id="plusBtn">+</button>
     <button id="minusBtn">-</button>
+
+    <div class="separator"></div>
+
     <button id="editBtn">編集</button>
+    <button id="doneBtn" style="display:none;">完了</button>
   </div>
 
   <script>
@@ -206,7 +238,78 @@
       saveCounts();
     }
 
-    editBtn.addEventListener("click", () => setMode("edit"));
+const highlightCheckbox = document.getElementById("highlightCheckbox");
+const savedHighlight = localStorage.getItem("highlightOver100");
+highlightCheckbox.checked = savedHighlight === null ? true : savedHighlight === "true";
+
+highlightCheckbox.addEventListener("change", () => {
+  localStorage.setItem("highlightOver100", highlightCheckbox.checked);
+
+  for (let i = 1; i <= monsterCount; i++) {
+    updateCountDisplay(i);
+  }
+});
+
+function updateCountDisplay(i) {
+  const el = document.getElementById(`count-${i}`);
+  el.textContent = counts[i-1];
+
+  const monsterEl = el.parentElement;
+
+  if (highlightCheckbox.checked && counts[i-1] >= 100) {
+    monsterEl.classList.add("over100");
+  } else {
+    monsterEl.classList.remove("over100");
+  }
+}
+
+const doneBtn = document.getElementById("doneBtn");
+let previousMode = "plus";
+const separator = document.querySelector(".separator");
+
+function setEditMode() {
+  previousMode = mode;
+  mode = "edit";
+
+  editBtn.style.display = "none";
+
+  plusBtn.style.display = "none";
+  minusBtn.style.display = "none";
+
+  doneBtn.style.display = "inline-block";
+
+  separator.style.display = "none";
+
+  enterEditMode();
+}
+
+function exitEditModeWithDone() {
+  exitEditMode();
+
+  mode = previousMode;
+
+  editBtn.style.display = "inline-block";
+  plusBtn.style.display = "inline-block";
+  minusBtn.style.display = "inline-block";
+  doneBtn.style.display = "none";
+
+  separator.style.display = "block";
+
+  [editBtn, plusBtn, minusBtn].forEach(btn => btn.classList.remove("active"));
+  if (mode === "plus") plusBtn.classList.add("active");
+  if (mode === "minus") minusBtn.classList.add("active");
+
+  for (let i = 1; i <= monsterCount; i++) {
+    updateCountDisplay(i);
+  }
+}
+
+for (let i = 1; i <= monsterCount; i++) {
+  updateCountDisplay(i);
+}
+
+    editBtn.addEventListener("click", () => setEditMode());
+    doneBtn.addEventListener("click", () => exitEditModeWithDone());
     plusBtn.addEventListener("click", () => setMode("plus"));
     minusBtn.addEventListener("click", () => setMode("minus"));
 
